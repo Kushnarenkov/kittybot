@@ -1,22 +1,47 @@
+import os
+import requests
+
+from dotenv import load_dotenv
+from telegram import ReplyKeyboardMarkup
 from telegram.ext import CommandHandler, Updater, Filters, MessageHandler
 
-updater = Updater(token='5862945651:AAEQmlQ1yXGW7qRwfiOxcF3bkjh-is4vawk')
 
-def say_hi(update, context):
+load_dotenv()
+
+secret_token = os.getenv('TOKEN')
+
+updater = Updater(token=secret_token)
+URL = 'https://api.thecatapi.com/v1/images/search'
+
+def get_new_image():
+    response = requests.get(URL).json()
+    random_cat = response[0].get('url')
+    return random_cat
+
+def new_cat(update, context):
     # Получаем информацию о чате, из которого пришло сообщение,
     # и сохраняем в переменную chat
     chat = update.effective_chat
-    context.bot.send_message(chat_id=chat.id, text='Здравстсвуй, я КотБот!')
+    context.bot.send_photo(chat.id, get_new_image())
 
 def wake_up(update, context):
     chat = update.effective_chat
-    context.bot.send_message(chat_id=chat.id, text='Буду рад поработать для тебя.')
+    name = update.message.chat.first_name
+    button = ReplyKeyboardMarkup([['/newcat']], resize_keyboardd=True)
+    context.bot.send_message(
+        chat_id=chat.id,
+        text=(
+            'Здравстсвуй, я КотБот! Буду рад поработать для тебя, {}.'
+            ' Посмотри, кого я для тебя отыскал.').format(name),
+        reply_markup=button
+    )
+    context.bot.send_photo(chat.id, get_new_image())
 
 updater.dispatcher.add_handler(CommandHandler('start', wake_up))
 # Регистрируется обработчик MessageHandler;
 # из всех полученных сообщений он будет выбирать только текстовые сообщения
-# и передавать их в функцию say_hi()
-updater.dispatcher.add_handler(MessageHandler(Filters.text, say_hi))
+# и передавать их в функцию new_cat()
+updater.dispatcher.add_handler(MessageHandler(Filters.text, new_cat))
 
 # Метод start_polling() запускает процесс polling, 
 # приложение начнёт отправлять регулярные запросы для получения обновлений.
