@@ -14,7 +14,14 @@ updater = Updater(token=secret_token)
 URL = 'https://api.thecatapi.com/v1/images/search'
 
 def get_new_image():
-    response = requests.get(URL).json()
+    try:
+        response = requests.get(URL)
+    except Exception as error:
+        print(error)
+        new_url = 'https://api.thedogapi.com/v1/images/search'
+        response = requests.get(new_url)
+    
+    response = response.json()
     random_cat = response[0].get('url')
     return random_cat
 
@@ -37,14 +44,18 @@ def wake_up(update, context):
     )
     context.bot.send_photo(chat.id, get_new_image())
 
-updater.dispatcher.add_handler(CommandHandler('start', wake_up))
-# Регистрируется обработчик MessageHandler;
-# из всех полученных сообщений он будет выбирать только текстовые сообщения
-# и передавать их в функцию new_cat()
-updater.dispatcher.add_handler(MessageHandler(Filters.text, new_cat))
+def main():
+    updater.dispatcher.add_handler(CommandHandler('start', wake_up))
+    # Регистрируется обработчик MessageHandler;
+    # из всех полученных сообщений он будет выбирать только текстовые сообщения
+    # и передавать их в функцию new_cat()
+    updater.dispatcher.add_handler(MessageHandler(Filters.text, new_cat))
 
-# Метод start_polling() запускает процесс polling, 
-# приложение начнёт отправлять регулярные запросы для получения обновлений.
-updater.start_polling()
-# Бот будет работать до тех пор, пока не нажмете Ctrl-C
-updater.idle()
+    # Метод start_polling() запускает процесс polling, 
+    # приложение начнёт отправлять регулярные запросы для получения обновлений.
+    updater.start_polling()
+    # Бот будет работать до тех пор, пока не нажмете Ctrl-C
+    updater.idle()
+
+if __name__ == '__main__':
+    main()
