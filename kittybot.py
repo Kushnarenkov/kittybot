@@ -1,23 +1,31 @@
+import logging
 import os
+
 import requests
 
-from dotenv import load_dotenv
 from telegram import ReplyKeyboardMarkup
-from telegram.ext import CommandHandler, Updater, Filters, MessageHandler
+from telegram.ext import CommandHandler, Updater
 
+from dotenv import load_dotenv
 
 load_dotenv()
 
 secret_token = os.getenv('TOKEN')
 
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+
 updater = Updater(token=secret_token)
+
 URL = 'https://api.thecatapi.com/v1/images/search'
 
 def get_new_image():
     try:
         response = requests.get(URL)
     except Exception as error:
-        print(error)
+        logging.error(f'Ошибка при запросе к основному API {error}')
         new_url = 'https://api.thedogapi.com/v1/images/search'
         response = requests.get(new_url)
     
@@ -49,7 +57,7 @@ def main():
     # Регистрируется обработчик MessageHandler;
     # из всех полученных сообщений он будет выбирать только текстовые сообщения
     # и передавать их в функцию new_cat()
-    updater.dispatcher.add_handler(MessageHandler(Filters.text, new_cat))
+    updater.dispatcher.add_handler(CommandHandler('newcat', new_cat))
 
     # Метод start_polling() запускает процесс polling, 
     # приложение начнёт отправлять регулярные запросы для получения обновлений.
